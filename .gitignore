@@ -21,3 +21,7 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# MySQL Workbench files
+*.mwb
+*.mwb.bak
