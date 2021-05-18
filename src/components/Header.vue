@@ -34,7 +34,7 @@
 
       <template v-for="link of links">
         <router-link
-          :key="link.to"
+          :key="'side-' + link.to"
           :to="link.to"
           :exact="link.exact || false"
           tag="li"
