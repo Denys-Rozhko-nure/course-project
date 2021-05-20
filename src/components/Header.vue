@@ -108,8 +108,8 @@ export default {
       },
       {
         to: "/login",
-        text: "Увійти до акаунту"
-      }
+        text: "Увійти до акаунту",
+      },
     ],
   }),
   mounted() {

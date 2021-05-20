@@ -3,11 +3,15 @@
     <h3>Регістрація</h3>
 
     <form class="form" action="post" @submit.prevent="onSubmit" ref="form">
-      <p>Вже маєте акаунт? - 
-        <router-link :to="'/login' + ($route.query.redirect ? 
-                                    `?redirect=${$route.query.redirect}` : 
-                                    '')"
-        >Увійти</router-link>
+      <p>
+        Вже маєте акаунт? -
+        <router-link
+          :to="
+            '/login' +
+            ($route.query.redirect ? `?redirect=${$route.query.redirect}` : '')
+          "
+          >Увійти</router-link
+        >
       </p>
 
       <div class="input-field">
@@ -177,15 +181,13 @@ export default {
         invalidFlag = true;
       }
 
-      if(invalidFlag)
-        return;
+      if (invalidFlag) return;
 
       this.registerOnServer();
     },
     async registerOnServer() {
-      
       let responce;
-      try{
+      try {
         responce = await fetch("http://localhost:4000/api/user", {
           method: "POST",
           headers: {
@@ -198,23 +200,23 @@ export default {
             password: this.password,
           }),
         });
-      } catch(e) {
+      } catch (e) {
         console.log(e);
       }
 
-      if(responce.status !== 200) {
-        M.toast({html: 'Не вдалося зареєструватися на сервері'});
+      if (responce.status !== 200) {
+        M.toast({ html: "Не вдалося зареєструватися на сервері" });
         return;
       }
 
       const user = await responce.json();
       this.$store.commit("setUser", user);
 
-      M.toast({html: 'Вас успішно зареєстровано'});
+      M.toast({ html: "Вас успішно зареєстровано" });
 
       const redirect = this.$route.query.redirect ?? "";
       this.$router.push(`/${redirect}`);
-    }
+    },
   },
 };
 </script>

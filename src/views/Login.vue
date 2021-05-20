@@ -3,7 +3,9 @@
     <h3>Вхід до акаунту</h3>
 
     <form class="form" action="post" @submit.prevent="onSubmit">
-      <p>Ще не маєте акаунту? - <router-link to="/login">Реєстрація</router-link></p>
+      <p>
+        Ще не маєте акаунту? - <router-link to="/login">Реєстрація</router-link>
+      </p>
 
       <div class="input-field">
         <label>Логін:</label>
@@ -103,8 +105,7 @@ export default {
         this.inputs.passwordErrorText = "";
       }
 
-      if(invalidFlag)
-        return;
+      if (invalidFlag) return;
     },
   },
 };
