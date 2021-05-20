@@ -2,8 +2,13 @@
   <div class="wrapper">
     <h3>Регістрація</h3>
 
-    <form class="form" action="post" @submit.prevent="onSubmit">
-      <p>Вже маєте акаунт? - <router-link to="/login">Увійти</router-link></p>
+    <form class="form" action="post" @submit.prevent="onSubmit" ref="form">
+      <p>Вже маєте акаунт? - 
+        <router-link :to="'/login' + ($route.query.redirect ? 
+                                    `?redirect=${$route.query.redirect}` : 
+                                    '')"
+        >Увійти</router-link>
+      </p>
 
       <div class="input-field">
         <label>Ім'я:</label>
@@ -174,7 +179,42 @@ export default {
 
       if(invalidFlag)
         return;
+
+      this.registerOnServer();
     },
+    async registerOnServer() {
+      
+      let responce;
+      try{
+        responce = await fetch("http://localhost:4000/api/user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json;charset=utf-8",
+          },
+          body: JSON.stringify({
+            firstName: this.firstName,
+            surname: this.surname,
+            login: this.login,
+            password: this.password,
+          }),
+        });
+      } catch(e) {
+        console.log(e);
+      }
+
+      if(responce.status !== 200) {
+        M.toast({html: 'Не вдалося зареєструватися на сервері'});
+        return;
+      }
+
+      const user = await responce.json();
+      this.$store.commit("setUser", user);
+
+      M.toast({html: 'Вас успішно зареєстровано'});
+
+      const redirect = this.$route.query.redirect ?? "";
+      this.$router.push(`/${redirect}`);
+    }
   },
 };
 </script>
