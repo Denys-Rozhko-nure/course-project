@@ -81,7 +81,7 @@
   }
 
   .divider {
-    margin: none;
+    margin: 0;
   }
 }
 </style>
@@ -106,6 +106,10 @@ export default {
         to: "/history",
         text: "Моя історія покупок",
       },
+      {
+        to: "/login",
+        text: "Увійти до акаунту"
+      }
     ],
   }),
   mounted() {
