@@ -124,6 +124,42 @@ app.post("/api/login", passport.authenticate("local"), function (req, res) {
   }
 });
 
+app.get("/api/filters", async (req, res) => {
+  const filters = {
+    min: null,
+    max: null,
+    isAscending: true,
+    categories: [],
+    providers: [],
+  };
+
+  let row = (
+    await pool.query(
+      'SELECT MAX(price) AS "max", MIN(price) AS "min" FROM product'
+    )
+  )[0][0];
+
+  filters.min = row.min;
+  filters.max = row.max;
+
+  let categoriesRows = (
+    await pool.query(
+      'SELECT category_id AS "categoryId", name AS "categoryName" FROM category'
+    )
+  )[0];
+
+  for (let key in categoriesRows) filters.categories.push(categoriesRows[key]);
+
+  let providersRows = (
+    await pool.query('SELECT DISTINCT provider_name AS "provider" FROM product')
+  )[0];
+
+  for (let key in providersRows)
+    filters.providers.push(providersRows[key].provider);
+
+  res.json(filters);
+});
+
 app.get("/api/products", (req, res) => {
   const orderString = req.query.desc === "true" ? "DESC" : "";
 
@@ -159,7 +195,7 @@ app.get("/api/products", (req, res) => {
     whereString = whereString.slice(0, whereString.length - 4);
     whereString = "WHERE " + whereString;
   }
-  console.log(whereString);
+
   pool
     .query(
       `SELECT DISTINCT

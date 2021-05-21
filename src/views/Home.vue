@@ -1,88 +1,101 @@
 <template>
   <div class="container">
-    <div class="row">
-      <div class="filters col s12 m3">
-        <div class="pink-text flow-text">Фільтри:</div>
-        <ul class="collapsible" ref="collapsible">
-          <li>
-            <div class="collapsible-header">
-              <i class="material-icons">shopping_cart</i>Продавець
-            </div>
-            <div class="collapsible-body"><span>Продавці...</span></div>
-          </li>
+    <Loader class="center loader" v-if="productsLoading || filtersLoading" />
+    <div v-else class="row">
+      <HomeFilters class="col s12 m3" :products="products" />
 
-          <li>
-            <div class="collapsible-header">
-              <i class="material-icons">credit_card</i>Ціна
-            </div>
-            <div class="collapsible-body">
-              <label>Мінімальна ціна: </label>
-              <input
-                type="number"
-                min="0"
-                :max="maxCost"
-                v-model="minCost"
-                step="0.01"
-              />
-
-              <label>Максимальна ціна: </label>
-              <input
-                type="number"
-                :min="minCost"
-                max="0"
-                v-model="maxCost"
-                step="0.01"
-              />
-
-              <div class="text">Сортувати за ціною:</div>
-              <div class="switch">
-                <label>
-                  За зростанням
-                  <input type="checkbox" v-model="isDecreasing" />
-                  <span class="lever"></span>
-                  За спаданням
-                </label>
-              </div>
-            </div>
-          </li>
-
-          <li>
-            <div class="collapsible-header">
-              <i class="material-icons">assessment</i>Категорії
-            </div>
-            <div class="collapsible-body"><span>Продавці...</span></div>
-          </li>
-        </ul>
-      </div>
+      <HomeProductsList class="col s12 m9" :products="products" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.text {
-  margin-top: 20px;
+.loader {
+  margin-top: 40px;
 }
 </style>
 
 <script>
+import HomeFilters from "@/components/HomeFilters";
+import HomeProductsList from "@/components/HomeProductsList";
 import M from "materialize-css";
 
 export default {
   data: () => ({
-    collapsible: null,
-    minCost: 0,
-    maxCost: 1,
-    isDecreasing: true,
+    products: [],
+    productsLoading: true,
+    filtersLoading: false,
   }),
-  mounted() {
-    this.collapsible = M.Collapsible.init(
-      document.querySelectorAll(".collapsible")
-    )[0];
+  async beforeMount() {
 
-    this.slider = this.$refs.slider;
+    await this.fetchProducts();
+
+    if (!this.$store.getters.defaultFilters.isSet)
+      await this.fetchFilters();
   },
-  beforeDestroy() {
-    this.collapsible.destroy();
+  methods: {
+    async fetchFilters() {
+      //eslint-disable-next-line no-debugger
+      // debugger;
+    
+      try {
+        this.filtersLoading = true;
+        const responce = await fetch(
+          `http://localhost:4000/api/filters`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json;charset=utf-8",
+            },
+          }
+        );
+
+        const filters = await responce.json();
+        
+        filters.categories = new Map(
+          filters.categories.map(c => [c.categoryId, c.categoryName])
+        );
+        filters.providers = new Set(filters.providers);
+        
+        this.$store.commit("setFilters", filters);
+
+        this.filtersLoading = false;
+      } catch (e) {
+        M.toast({ html: "Не вдалося завантажити фільтри" });
+      }
+    },
+    async fetchProducts() {
+      // //eslint-disable-next-line no-debugger
+      // debugger;
+      try {
+        const responce = await fetch(
+          `http://localhost:4000/api/products${this.$route.fullPath}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json;charset=utf-8",
+            },
+          }
+        );
+
+        const body = await responce.json();
+        this.products = [];
+        for (let key in body) this.products.push(body[key]);
+
+        this.productsLoading = false;
+      } catch (e) {
+        M.toast({ html: "Не вдалося завантажити список товарів" });
+      }
+    },
+  },
+  watch: {
+    "$route.fullPath": function () {
+      this.fetchProducts();
+    },
+  },
+  components: {
+    HomeFilters,
+    HomeProductsList,
   },
 };
 </script>
