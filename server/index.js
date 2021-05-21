@@ -18,7 +18,6 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-
 passport.use(
   new LocalStrategy(
     {
@@ -126,7 +125,6 @@ app.post("/api/login", passport.authenticate("local"), function (req, res) {
 });
 
 app.get("/api/products", (req, res) => {
-  console.log("api/products");
   const orderString = req.query.desc === "true" ? "DESC" : "";
 
   let whereString = "";
@@ -135,7 +133,7 @@ app.get("/api/products", (req, res) => {
     whereString += `price >= ${Number.parseInt(req.query.min)} AND `;
 
   if (req.query.max)
-    whereString += `price >= ${Number.parseInt(req.query.max)} AND `;
+    whereString += `price <= ${Number.parseInt(req.query.max)} AND `;
 
   if (req.query.providers) {
     const providers = req.query.providers
@@ -157,11 +155,10 @@ app.get("/api/products", (req, res) => {
     whereString = whereString.slice(0, whereString.length - 4);
     whereString = "WHERE " + whereString;
   }
-  console.log(whereString);
   pool
     .query(
       `SELECT DISTINCT
-      product_id AS "productIs",
+      product_id AS "productId",
       product.name AS "productName", 
       price, 
       description, 
