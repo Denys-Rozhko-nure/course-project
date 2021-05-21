@@ -4,7 +4,8 @@
 
     <form class="form" action="post" @submit.prevent="onSubmit">
       <p>
-        Ще не маєте акаунту? - <router-link
+        Ще не маєте акаунту? -
+        <router-link
           :to="
             '/register' +
             ($route.query.redirect ? `?redirect=${$route.query.redirect}` : '')
@@ -131,7 +132,8 @@ export default {
         let resObj = await responce.json();
 
         if (responce.status !== 200) {
-          const message = resObj.message || "Не вдалося увійти до акаунту на сервері";
+          const message =
+            resObj.message || "Не вдалося увійти до акаунту на сервері";
           M.toast({ html: message });
           return;
         }
