@@ -129,11 +129,15 @@ app.get("/api/products", (req, res) => {
 
   let whereString = "";
 
-  if (req.query.min)
-    whereString += `price >= ${Number.parseInt(req.query.min)} AND `;
+  if (req.query.min) {
+    let minInInt = Math.floor(Number.parseFloat(req.query.min) * 100);
+    whereString += `price >= ${minInInt} AND `;
+  }
 
-  if (req.query.max)
-    whereString += `price <= ${Number.parseInt(req.query.max)} AND `;
+  if (req.query.max) {
+    let maxInInt = Math.floor(Number.parseFloat(req.query.max) * 100);
+    whereString += `price <= ${maxInInt} AND `;
+  }
 
   if (req.query.providers) {
     const providers = req.query.providers
@@ -155,6 +159,7 @@ app.get("/api/products", (req, res) => {
     whereString = whereString.slice(0, whereString.length - 4);
     whereString = "WHERE " + whereString;
   }
+  console.log(whereString);
   pool
     .query(
       `SELECT DISTINCT
