@@ -18,12 +18,6 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-// pool
-//   .query(
-//     'SELECT first_name AS "firstName", surname, login, password_hash AS "passportHash", EXISTS(SELECT * FROM `admin` WHERE `admin`.user_id = `user`.user_id) AS "isAdmin" FROM `user` WHERE login = ?',
-//     ["dsfsdf"]
-//   )
-//   .then((row) => console.log(Object.keys(row[0][0])));
 
 passport.use(
   new LocalStrategy(
@@ -129,6 +123,59 @@ app.post("/api/login", passport.authenticate("local"), function (req, res) {
       message: req.message,
     });
   }
+});
+
+app.get("/api/products", (req, res) => {
+  console.log("api/products");
+  const orderString = req.query.desc === "true" ? "DESC" : "";
+
+  let whereString = "";
+
+  if (req.query.min)
+    whereString += `price >= ${Number.parseInt(req.query.min)} AND `;
+
+  if (req.query.max)
+    whereString += `price >= ${Number.parseInt(req.query.max)} AND `;
+
+  if (req.query.providers) {
+    const providers = req.query.providers
+      .replace(/"/g, "")
+      .split(",")
+      .map((el) => `"${el}"`);
+    whereString += `provider_name IN (${providers}) AND `;
+  }
+
+  if (req.query.categories) {
+    const categories = req.query.categories
+      .split(",")
+      .map((el) => Number.parseInt(el))
+      .join(",");
+    whereString += `category_id IN (${categories}) AND `;
+  }
+
+  if (whereString.endsWith(" AND ")) {
+    whereString = whereString.slice(0, whereString.length - 4);
+    whereString = "WHERE " + whereString;
+  }
+  console.log(whereString);
+  pool
+    .query(
+      `SELECT DISTINCT
+      product_id AS "productIs",
+      product.name AS "productName", 
+      price, 
+      description, 
+      available_number AS "availavleNumber", 
+      provider_name AS "providerName"  
+    FROM category 
+      INNER JOIN category_has_product USING(category_id)
+      INNER JOIN product USING(product_id)
+    ${whereString}
+    ORDER BY price ${orderString}`
+    )
+    .then((result) => result[0])
+    .then((rows) => res.status(200).json(rows))
+    .catch(res.status(500));
 });
 
 app.get("*", async (req, res) => {
