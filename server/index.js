@@ -165,7 +165,7 @@ app.get("/api/products", (req, res) => {
       product.name AS "productName", 
       price, 
       description, 
-      available_number AS "availavleNumber", 
+      available_number AS "availableNumber", 
       provider_name AS "providerName"  
     FROM category 
       INNER JOIN category_has_product USING(category_id)
