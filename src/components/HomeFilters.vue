@@ -145,9 +145,7 @@ export default {
         resultQuery += `max=${this.maxPrice}&`;
       }
 
-      if (
-        this.isAscending !== this.$store.getters.defaultFilters.isAscending
-      ) {
+      if (this.isAscending !== this.$store.getters.defaultFilters.isAscending) {
         resultQuery += `desc=${!this.isAscending}&`;
       }
 

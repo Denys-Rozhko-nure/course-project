@@ -27,36 +27,31 @@ export default {
     filtersLoading: false,
   }),
   async beforeMount() {
-
     await this.fetchProducts();
 
-    if (!this.$store.getters.defaultFilters.isSet)
-      await this.fetchFilters();
+    if (!this.$store.getters.defaultFilters.isSet) await this.fetchFilters();
   },
   methods: {
     async fetchFilters() {
       //eslint-disable-next-line no-debugger
       // debugger;
-    
+
       try {
         this.filtersLoading = true;
-        const responce = await fetch(
-          `http://localhost:4000/api/filters`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json;charset=utf-8",
-            },
-          }
-        );
+        const responce = await fetch(`http://localhost:4000/api/filters`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json;charset=utf-8",
+          },
+        });
 
         const filters = await responce.json();
-        
+
         filters.categories = new Map(
-          filters.categories.map(c => [c.categoryId, c.categoryName])
+          filters.categories.map((c) => [c.categoryId, c.categoryName])
         );
         filters.providers = new Set(filters.providers);
-        
+
         this.$store.commit("setFilters", filters);
 
         this.filtersLoading = false;

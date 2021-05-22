@@ -6,24 +6,36 @@
     <div class="card-content">
       <span class="card-title activator grey-text text-darken-4"
         >{{ product.productName }}<br />
-        {{product.price / 100}} грн<i class="material-icons right"
+        {{ product.price / 100 }} грн<i class="material-icons right"
           >more_vert</i
         ></span
       >
       <div>
-        Додати 
-        <input type="number" min="1" :max="product.availableNumber" v-model="count" /> 
-        {{wordOneAdd}}
-        <button class="btn waves-effect" @click="addToBasketOnServer">до кошику</button>
-      </div>   
+        Додати
+        <input
+          type="number"
+          min="1"
+          :max="product.availableNumber"
+          v-model="count"
+        />
+        {{ wordOneAdd }}
+        <button class="btn waves-effect" @click="addToBasketOnServer">
+          до кошику
+        </button>
+      </div>
     </div>
     <div class="card-reveal">
       <span class="card-title grey-text text-darken-4"
         >{{ product.productName }} <br />
-        {{product.price / 100}} грн<i class="material-icons right">close</i></span
+        {{ product.price / 100 }} грн<i class="material-icons right"
+          >close</i
+        ></span
       >
       <p>{{ product.description }}</p>
-      <p>У наявності {{ product.availableNumber }} {{ wordOne(product.availableNumber) }}</p>
+      <p>
+        У наявності {{ product.availableNumber }}
+        {{ wordOne(product.availableNumber) }}
+      </p>
     </div>
   </div>
 </template>
@@ -52,17 +64,15 @@ import M from "materialize-css";
 export default {
   props: ["product"],
   data: () => ({
-    count: 1
+    count: 1,
   }),
   computed: {
     wordOneAdd() {
-      return this.count % 10 == 1 
-        ? "одиницю"
-        : this.wordOne(this.count);
-    }
+      return this.count % 10 == 1 ? "одиницю" : this.wordOne(this.count);
+    },
   },
   methods: {
-    async addToBasketOnServer(){
+    async addToBasketOnServer() {
       try {
         const responce = await fetch(
           `http://localhost:4000/api/product_in_basket`,
@@ -79,14 +89,16 @@ export default {
         );
 
         if (responce.ok) {
-          M.toast({html: "Товар успішно доданий до кошику"});
+          M.toast({ html: "Товар успішно доданий до кошику" });
         }
         if (responce.status == 403) {
-          M.toast({html: "Щоб додавати товари до кошику треба аторизуватися"});
+          M.toast({
+            html: "Щоб додавати товари до кошику треба аторизуватися",
+          });
           this.$router.push("/login");
         }
-      } catch(e) {
-        M.toast({html: "Не вдалося додати товар до кошику"});
+      } catch (e) {
+        M.toast({ html: "Не вдалося додати товар до кошику" });
       }
     },
     wordOne(n) {
