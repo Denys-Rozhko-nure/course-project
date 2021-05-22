@@ -47,17 +47,20 @@ passport.use(
 );
 
 passport.serializeUser(function (user, done) {
+  // console.log("serializing user", user);
   done(null, user.userId);
 });
 
 passport.deserializeUser(function (id, done) {
+  console.log("deserializing user", id);
   pool
     .query(
-      'SELECT user_id AS "userId", first_name AS "firstName", surname, login, password_hash AS "passportHash", EXISTS(SELECT * FROM `admin` WHERE `admin`.user_id = `user`.user_id) AS "isAdmin" FROM `user` WHERE user_id = ?',
+      'SELECT user_id AS "userId", first_name AS "firstName", surname, login, password_hash AS "passportHash", EXISTS(SELECT * FROM admin WHERE admin.user_id = user.user_id) AS "isAdmin" FROM user WHERE user_id = ?',
       [id]
     )
     .then((result) => result[0])
     .then((rows) => rows[0] || done(null, false))
+    .then((user) => done(null, user))
     .catch((err) => done(err));
 });
 
@@ -72,7 +75,16 @@ const allowCors = (req, res, next) => {
 app.use(allowCors);
 app.use(express.static(path.join(__dirname, "..", "dist")));
 app.use(cookieParser());
-app.use(session({ secret: "overwatch" }));
+app.use(
+  session({
+    secret: "overwatch",
+    cookie: {
+      secure: false,
+      resave: false,
+      saveUninitialized: false,
+    },
+  })
+);
 app.use(express.json());
 app.use(passport.initialize());
 app.use(passport.session());
@@ -111,17 +123,31 @@ app.post("/api/user", async (req, res) => {
 
 app.post("/api/login", passport.authenticate("local"), function (req, res) {
   if (req.isAuthenticated()) {
-    console.log(req.user);
     res.status(200).json({
       isAdmin: req.user.isAdmin,
       firstName: req.user.firstName,
       surname: req.user.surname,
     });
+    console.log("logged in");
   } else {
     res.status(403).json({
       message: req.message,
     });
   }
+});
+
+app.post("/api/product_in_basket", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(403).send("");
+    return;
+  }
+  console.log(req.user);
+  await pool.query(
+    "INSERT INTO product_in_basket (user_id, product_id, number_of_product) VALUES (?,?,?)",
+    [req.user.userId, req.body.productId, req.body.n]
+  );
+
+  res.status(200).send("");
 });
 
 app.get("/api/filters", async (req, res) => {
@@ -161,6 +187,8 @@ app.get("/api/filters", async (req, res) => {
 });
 
 app.get("/api/products", (req, res) => {
+  console.log(req.session);
+  console.log(req.user);
   const orderString = req.query.desc === "true" ? "DESC" : "";
 
   let whereString = "";
