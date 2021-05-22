@@ -52,7 +52,6 @@ passport.serializeUser(function (user, done) {
 });
 
 passport.deserializeUser(function (id, done) {
-  console.log("deserializing user", id);
   pool
     .query(
       'SELECT user_id AS "userId", first_name AS "firstName", surname, login, password_hash AS "passportHash", EXISTS(SELECT * FROM admin WHERE admin.user_id = user.user_id) AS "isAdmin" FROM user WHERE user_id = ?',
@@ -146,6 +145,50 @@ app.post("/api/product_in_basket", async (req, res) => {
     "INSERT INTO product_in_basket (user_id, product_id, number_of_product) VALUES (?,?,?)",
     [req.user.userId, req.body.productId, req.body.n]
   );
+
+  res.status(200).send("");
+});
+
+app.get("/api/product_in_basket", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(403).send("");
+    return;
+  }
+
+  let rows = (
+    await pool.query(
+      `SELECT 
+          product_id AS "productId",
+          name,
+          price,
+          description,
+          number_of_product AS "number"
+      FROM product NATURAL JOIN product_in_basket 
+      WHERE user_id = ?`,
+      [req.user.userId]
+    )
+  )[0];
+
+  res.status(200).json(rows);
+});
+
+app.patch("/api/product_in_basket", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(403).send("");
+    return;
+  }
+
+  if (req.body.n == 0) {
+    await pool.query(
+      "DELETE FROM product_in_basket WHERE user_id = ? AND product_id = ?",
+      [req.user.userId, req.body.productId]
+    );
+  } else {
+    await pool.query(
+      "UPDATE product_in_basket SET number_of_product = ? WHERE user_id = ? AND product_id = ?",
+      [req.body.n, req.user.userId, req.body.productId]
+    );
+  }
 
   res.status(200).send("");
 });

@@ -1,6 +1,7 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
 import Home from "../views/Home.vue";
+import Basket from "../views/Basket";
 import Register from "@/views/Register";
 import Login from "@/views/Login";
 
@@ -21,6 +22,11 @@ const routes = [
     path: "/login",
     name: "Login",
     component: Login,
+  },
+  {
+    path: "/basket",
+    name: "Basket",
+    component: Basket,
   },
 ];
 
