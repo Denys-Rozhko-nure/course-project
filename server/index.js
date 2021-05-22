@@ -287,6 +287,106 @@ app.get("/api/products", (req, res) => {
     .catch(res.status(500));
 });
 
+app.post("/api/order", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(403).send("");
+    return;
+  }
+
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
+  const basketRows = (
+    await connection.query(
+      `SELECT 
+        product_id AS "productId", 
+        number_of_product AS "number", 
+        available_number AS "availableNumber"
+      FROM product NATURAL JOIN product_in_basket
+      WHERE user_id = ?
+      FOR UPDATE`,
+      [req.user.userId]
+    )
+  )[0];
+
+  if (Object.keys(basketRows).length === 0) {
+    await connection.commit();
+    res.status(409).json({
+      message: "Не можно оформити замовлення при пустому кошику",
+    });
+    return;
+  }
+
+  const absentProducts = [];
+  for (let key in basketRows) {
+    const productInBasket = basketRows[key];
+    if (productInBasket.availableNumber < productInBasket.number)
+      absentProducts.push(productInBasket.productId);
+
+    if (absentProducts.length > 0) {
+      connection.commit();
+      res.status(409).json({
+        message:
+          "Деякі товари Вашого кошику відсутні на складі у необхідній кількості",
+        absentProducts,
+      });
+      return;
+    }
+  }
+
+  const result = (
+    await connection.query(
+      `
+    INSERT INTO \`order\` 
+      (oblast, locality, department_number, status, user_id)
+    VALUES
+      (?,?,?,?,?)`,
+      [
+        req.body.oblast,
+        req.body.locality,
+        req.body.departmentNumber,
+        0,
+        req.user.userId,
+      ]
+    )
+  )[0];
+
+  const orderId = result.insertId;
+
+  for (let key in basketRows) {
+    const productInBasket = basketRows[key];
+    await connection.query(
+      `
+      INSERT INTO order_has_product 
+        (order_id, product_id, number_of_products)
+      VALUES
+        (?,?,?)`,
+      [orderId, productInBasket.productId, productInBasket.number]
+    );
+
+    await connection.query(
+      `
+      UPDATE product product 
+        SET available_number = ?
+      WHERE product_id = ?`,
+      [
+        productInBasket.availableNumber - productInBasket.number,
+        productInBasket.productId,
+      ]
+    );
+  }
+
+  await connection.query(
+    `DELETE
+    FROM product_in_basket
+    WHERE user_id = ?`,
+    [req.user.userId]
+  );
+
+  await connection.commit();
+
+  res.status(200).send("");
+});
+
 app.get("*", async (req, res) => {
   res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
 });

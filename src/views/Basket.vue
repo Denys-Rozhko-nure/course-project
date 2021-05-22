@@ -7,6 +7,7 @@
         v-for="product of products"
         :key="`product${product.productId}`"
         :product="product"
+        :class="{ absent: absentProductsId.has(product.productId) }"
         @deleted="deleteProduct"
       />
     </div>
@@ -36,6 +37,10 @@
 .card {
   width: 330px;
 }
+
+.card.absent {
+  background: #ffc2c2;
+}
 </style>
 
 <script>
@@ -46,7 +51,14 @@ export default {
   data: () => ({
     products: [],
     loading: true,
+    absentProductsId: new Set(),
   }),
+  beforeMount() {
+    this.absentProductsId = new Set(
+      this.$route.query.absent?.split(",")?.map((el) => Number.parseInt(el))
+    );
+    console.log(this.absentProductsId);
+  },
   async mounted() {
     try {
       const responce = await fetch(
@@ -69,13 +81,14 @@ export default {
 
       for (let key in products) this.products.push(products[key]);
       this.loading = false;
+      console.log(this.products);
     } catch (e) {
       M.toast({ html: "Не вдалося завантажити Ваш кошик" });
     }
   },
   methods: {
     deleteProduct(productId) {
-      this.products = this.products.filter(el => el.productId !== productId);
+      this.products = this.products.filter((el) => el.productId !== productId);
     },
   },
   components: {
