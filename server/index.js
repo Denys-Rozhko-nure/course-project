@@ -140,7 +140,7 @@ app.post("/api/product_in_basket", async (req, res) => {
     res.status(403).send("");
     return;
   }
-  console.log(req.user);
+
   await pool.query(
     "INSERT INTO product_in_basket (user_id, product_id, number_of_product) VALUES (?,?,?)",
     [req.user.userId, req.body.productId, req.body.n]
@@ -230,8 +230,7 @@ app.get("/api/filters", async (req, res) => {
 });
 
 app.get("/api/products", (req, res) => {
-  console.log(req.session);
-  console.log(req.user);
+
   const orderString = req.query.desc === "true" ? "DESC" : "";
 
   let whereString = "";
@@ -385,6 +384,63 @@ app.post("/api/order", async (req, res) => {
   await connection.commit();
 
   res.status(200).send("");
+});
+
+app.get("/api/order", async (req, res) => {
+  if (!req.isAuthenticated()) res.status(403).end();
+  console.log("orders user", req.user);
+  const rows = (
+    await pool.query(
+      `
+    SELECT
+      order_id AS "orderId",
+      oblast,
+      locality,
+      department_number AS "departmentNumber",
+      status,
+      product_id AS "productId",
+      name AS "productName",
+      price,
+      description,
+      number_of_products AS "number"
+    FROM \`order\` 
+      NATURAL JOIN order_has_product 
+      NATURAL JOIN product 
+    WHERE user_id = ?
+    ORDER BY order_id DESC`,
+      [req.user.userId]
+    )
+  )[0];
+  console.log("raw rows", typeof rows);
+  const orders = [];
+
+  for (let key in rows) {
+    const row = rows[key];
+    const product = {
+      productId: row.productId,
+      productName: row.productName,
+      price: row.price,
+      number: row.number,
+      description: row.description,
+    };
+    if (
+      orders[orders.length - 1] &&
+      orders[orders.length - 1].orderId === row.orderId
+    ) {
+      orders[orders.length - 1].products.push(product);
+    } else {
+      orders.push({
+        orderId: row.orderId,
+        oblast: row.oblast,
+        locality: row.locality,
+        departmentNumber: row.departmentNumber,
+        status: row.status,
+        products: [product],
+      });
+    }
+  }
+  console.log("orders", orders);
+  res.status(200).json(orders);
 });
 
 app.get("*", async (req, res) => {
