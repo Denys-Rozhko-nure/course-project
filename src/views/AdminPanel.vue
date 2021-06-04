@@ -2,6 +2,9 @@
   <Loader v-if="orders.lenght > 0" class="center" />
   <div v-else class="container">
     <h2>Ваша історія замовлень:</h2>
+    <router-link to="/admin/providers_history"
+      >До перегляду історії покупок товарів постачальників</router-link
+    >
     <div v-for="o of orders" :key="`order${o.orderId}`" class="order">
       <h4>Замовлення № {{ o.orderId }} користувача {{ o.userFullName }}</h4>
 

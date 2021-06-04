@@ -136,7 +136,7 @@ app.post("/api/login", passport.authenticate("local"), function (req, res) {
 });
 
 app.post("/api/product_in_basket", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.user) {
     res.status(403).send("");
     return;
   }
@@ -150,7 +150,7 @@ app.post("/api/product_in_basket", async (req, res) => {
 });
 
 app.get("/api/product_in_basket", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.user) {
     res.status(403).send("");
     return;
   }
@@ -173,7 +173,7 @@ app.get("/api/product_in_basket", async (req, res) => {
 });
 
 app.patch("/api/product_in_basket", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.user) {
     res.status(403).send("");
     return;
   }
@@ -286,7 +286,7 @@ app.get("/api/products", (req, res) => {
 });
 
 app.post("/api/order", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.user) {
     res.status(403).send("");
     return;
   }
@@ -386,7 +386,7 @@ app.post("/api/order", async (req, res) => {
 });
 
 app.get("/api/order", async (req, res) => {
-  if (!req.isAuthenticated()) res.status(403).end();
+  if (!req.user) res.status(403).end();
   console.log("orders user", req.user);
   const rows = (
     await pool.query(

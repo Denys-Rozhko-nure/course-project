@@ -139,7 +139,7 @@ export default {
         }
 
         const user = resObj;
-        this.$store.commit("setUser", user);
+        this.$store.commit("setIsAdmin", user.isAdmin);
 
         M.toast({ html: "Ви успішно увійшли до акаунту" });
 

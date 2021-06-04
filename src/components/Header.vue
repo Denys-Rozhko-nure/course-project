@@ -110,26 +110,12 @@ export default {
         to: "/login",
         text: "Увійти до акаунту",
       },
+      {
+        to: "/admin",
+        text: "Адміністративна панель",
+      },
     ],
-    isAdminLink: {
-      to: "/admin",
-      text: "Адміністративна панель",
-    },
   }),
-  computed: {
-    isAdmin() {
-      return this.$store.getters.isAdmin;
-    },
-  },
-  watch: {
-    isAdmin(value) {
-      if (value) {
-        this.links.push(this.isAdminLink);
-      } else {
-        this.links = this.links.filter((link) => link !== this.isAdminLink);
-      }
-    },
-  },
   mounted() {
     const elems = document.querySelectorAll(".sidenav");
     this.sidenavInstances = M.Sidenav.init(elems);
