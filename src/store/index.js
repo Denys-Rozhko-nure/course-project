@@ -41,7 +41,7 @@ export default new Vuex.Store({
   actions: {},
   modules: {},
   getters: {
-    user: (state) => state.user,
+    isAdmin: (state) => state.isAdmin,
     defaultFilters: (state) => state.defaultFilters,
   },
 });
