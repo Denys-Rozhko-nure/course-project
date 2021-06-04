@@ -452,6 +452,77 @@ app.get("/api/isAdmin", (req, res) => {
   }
 });
 
+app.get("/api/order/all", async (req, res) => {
+  console.log(req.user);
+  if (!req.user || !req.user.isAdmin) res.status(403).end();
+
+  const rows = (
+    await pool.query(
+      `
+    SELECT
+      CONCAT(first_name, " ", surname) AS userFullName,
+      order_id AS "orderId",
+      oblast,
+      locality,
+      department_number AS "departmentNumber",
+      status,
+      product_id AS "productId",
+      name AS "productName",
+      price,
+      description,
+      number_of_products AS "number"
+    FROM \`order\` 
+      NATURAL JOIN order_has_product 
+      NATURAL JOIN product 
+      NATURAL JOIN user
+    ORDER BY order_id DESC`
+    )
+  )[0];
+  const orders = [];
+
+  for (let key in rows) {
+    const row = rows[key];
+    const product = {
+      productId: row.productId,
+      productName: row.productName,
+      price: row.price,
+      number: row.number,
+      description: row.description,
+    };
+    if (
+      orders[orders.length - 1] &&
+      orders[orders.length - 1].orderId === row.orderId
+    ) {
+      orders[orders.length - 1].products.push(product);
+    } else {
+      orders.push({
+        userFullName: row.userFullName,
+        orderId: row.orderId,
+        oblast: row.oblast,
+        locality: row.locality,
+        departmentNumber: row.departmentNumber,
+        status: row.status,
+        products: [product],
+      });
+    }
+  }
+
+  res.status(200).json(orders);
+});
+
+app.patch("/api/order", async (req, res) => {
+  if (!req.user || !req.user.isAdmin) res.status(403).end();
+
+  console.log(`status = ${req.body.status} orderId = ${req.body.orderId}`);
+
+  await pool.query("UPDATE `order` SET status = ? WHERE order_id = ?", [
+    req.body.status,
+    req.body.orderId,
+  ]);
+
+  res.status(200).end();
+});
+
 app.get("*", async (req, res) => {
   res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
 });

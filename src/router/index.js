@@ -6,6 +6,7 @@ import Register from "@/views/Register";
 import Login from "@/views/Login";
 import NewOrder from "@/views/NewOrder";
 import OrderHistory from "@/views/OrderHistory";
+import AdminPanel from "@/views/AdminPanel";
 
 Vue.use(VueRouter);
 
@@ -39,6 +40,11 @@ const routes = [
     path: "/history",
     name: "OrderHistory",
     component: OrderHistory,
+  },
+  {
+    path: "/admin",
+    name: "AdminPanel",
+    component: AdminPanel,
   },
 ];
 
