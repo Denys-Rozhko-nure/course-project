@@ -523,6 +523,62 @@ app.patch("/api/order", async (req, res) => {
   res.status(200).end();
 });
 
+app.get("/api/order/by_provider", async (req, res) => {
+  if (!req.user || !req.user.isAdmin) res.status(403).end();
+
+  console.log(req.query.provider);
+
+  const rows = (
+    await pool.query(
+      `
+    SELECT
+      CONCAT(first_name, " ", surname) AS userFullName,
+      order_id AS "orderId",
+      status,
+      product_id AS "productId",
+      name AS "productName",
+      price,
+      description,
+      number_of_products AS "number"
+    FROM \`order\` 
+      NATURAL JOIN order_has_product 
+      NATURAL JOIN product 
+      NATURAL JOIN user
+    WHERE provider_name = ?
+    ORDER BY order_id DESC`,
+      [req.query.provider]
+    )
+  )[0];
+  console.log(rows);
+  const orders = [];
+
+  for (let key in rows) {
+    const row = rows[key];
+    const product = {
+      productId: row.productId,
+      productName: row.productName,
+      price: row.price,
+      number: row.number,
+      description: row.description,
+    };
+    if (
+      orders[orders.length - 1] &&
+      orders[orders.length - 1].orderId === row.orderId
+    ) {
+      orders[orders.length - 1].products.push(product);
+    } else {
+      orders.push({
+        userFullName: row.userFullName,
+        orderId: row.orderId,
+        status: row.status,
+        products: [product],
+      });
+    }
+  }
+
+  res.json(orders);
+});
+
 app.get("*", async (req, res) => {
   res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
 });

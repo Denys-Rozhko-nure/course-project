@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="all">
     <div class="navbar-fixed">
       <nav>
         <div class="nav-wrapper pink lighten-1r">
@@ -82,6 +82,12 @@
 
   .divider {
     margin: 0;
+  }
+}
+
+@media print {
+  .all {
+    display: none;
   }
 }
 </style>
