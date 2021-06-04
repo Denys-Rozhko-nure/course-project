@@ -5,7 +5,7 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    user: null,
+    isAdmin: false,
     defaultFilters: {
       maxPrice: 99000,
       minPrice: 3500,
@@ -28,8 +28,8 @@ export default new Vuex.Store({
     },
   },
   mutations: {
-    setUser(user) {
-      this.user = user;
+    setIsAdmin(isAdmin) {
+      this.isAdmin = isAdmin;
     },
     setFilters(filters) {
       console.log("commit");

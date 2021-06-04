@@ -230,7 +230,6 @@ app.get("/api/filters", async (req, res) => {
 });
 
 app.get("/api/products", (req, res) => {
-
   const orderString = req.query.desc === "true" ? "DESC" : "";
 
   let whereString = "";
@@ -441,6 +440,16 @@ app.get("/api/order", async (req, res) => {
   }
   console.log("orders", orders);
   res.status(200).json(orders);
+});
+
+app.get("/api/isAdmin", (req, res) => {
+  if (req.user) {
+    res.json({
+      isAdmin: req.user.isAdmin,
+    });
+  } else {
+    res.status(403).end();
+  }
 });
 
 app.get("*", async (req, res) => {
