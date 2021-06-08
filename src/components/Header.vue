@@ -3,7 +3,8 @@
     <div class="navbar-fixed">
       <nav>
         <div class="nav-wrapper pink lighten-1r">
-          <a href="#!" class="brand-logo right" @click.prevent>Logo</a>
+          <img class="brand-logo right" src="../assets/logo.png" />
+          <!-- <a href="#!" class="brand-logo right" @click.prevent>Logo</a> -->
           <a href="#" data-target="mobile-demo" class="sidenav-trigger"
             ><i class="material-icons">menu</i></a
           >
@@ -73,6 +74,8 @@
 
 .brand-logo {
   margin-right: 15vw;
+  height: 100%;
+  border-radius: 35%;
 }
 
 .sidenav {
