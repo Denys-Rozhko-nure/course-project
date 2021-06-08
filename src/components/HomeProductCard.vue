@@ -14,7 +14,7 @@
         Додати
         <input
           type="number"
-          min="1"
+          :min="Math.min(1, product.availableNumber)"
           :max="product.availableNumber"
           v-model="count"
         />
@@ -73,6 +73,10 @@ export default {
   },
   methods: {
     async addToBasketOnServer() {
+      if (this.count === 0) {
+        M.toast({ html: "Даного товару немає у наявності" });
+        return;
+      }
       try {
         const responce = await fetch(
           `http://localhost:4000/api/product_in_basket`,

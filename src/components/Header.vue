@@ -2,7 +2,7 @@
   <div class="all">
     <div class="navbar-fixed">
       <nav>
-        <div class="nav-wrapper pink lighten-1r">
+        <div class="nav-wrapper pink lighten-1r valign-wrapper">
           <img class="brand-logo right" src="../assets/logo.png" />
           <!-- <a href="#!" class="brand-logo right" @click.prevent>Logo</a> -->
           <a href="#" data-target="mobile-demo" class="sidenav-trigger"
@@ -74,7 +74,8 @@
 
 .brand-logo {
   margin-right: 15vw;
-  height: 100%;
+  height: 80%;
+  padding: 15px;
   border-radius: 35%;
 }
 

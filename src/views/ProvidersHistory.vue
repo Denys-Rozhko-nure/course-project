@@ -1,22 +1,16 @@
 <template>
   <div class="container">
-    <h3>
-      Історія потсачальника, замовлення товаріх якіх бажаєте переглянути
-    </h3>
-      <select 
-        v-model="selectedProvider" 
-        @change="selectedProviderChanged"
-        class="browser-default"
-      >
-        <option value="" disabled>Оберіть постачальника</option>
-        <option 
-          v-for="p of availableProviders" 
-          :key="p" 
-          :value="p"
-        >
-          {{ p }}
-        </option>
-      </select>
+    <h3>Історія потсачальника, замовлення товаріх якіх бажаєте переглянути</h3>
+    <select
+      v-model="selectedProvider"
+      @change="selectedProviderChanged"
+      class="browser-default"
+    >
+      <option value="" disabled>Оберіть постачальника</option>
+      <option v-for="p of $store.getters.providers" :key="p" :value="p">
+        {{ p }}
+      </option>
+    </select>
     <Loader class="center" v-if="ordersLoading" />
 
     <template v-else>
@@ -93,14 +87,6 @@ import M from "materialize-css";
 export default {
   data: () => ({
     orders: [],
-    availableProviders: [
-      "Faber-Castell",
-      "Com4ball Stabilo",
-      "Dunlop",
-      "A4Tech",
-      "Wenger",
-      "Premax",
-    ],
     ordersLoading: false,
     selectedProvider: "",
   }),
@@ -108,7 +94,9 @@ export default {
     async selectedProviderChanged(event) {
       console.log(event);
       try {
-        const query = `?provider=${window.encodeURIComponent(this.selectedProvider)}`;
+        const query = `?provider=${window.encodeURIComponent(
+          this.selectedProvider
+        )}`;
         const responce = await fetch(
           `http://localhost:4000/api/order/by_provider${query}`,
           {

@@ -7,16 +7,11 @@ const LocalStrategy = require("passport-local").Strategy;
 const sha512 = require("js-sha512").sha512;
 const path = require("path");
 
-const pool = mysql.createPool({
-  host: "localhost",
-  port: "3306",
-  user: "root",
-  password: "12345678",
-  database: "main",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+const dbConfig = require("./db-config");
+const pool = mysql.createPool(dbConfig);
+
+const MySqlDAO = require("./MySQL_DAO");
+const mysqlDAO = new MySqlDAO(pool);
 
 passport.use(
   new LocalStrategy(
@@ -24,12 +19,8 @@ passport.use(
       usernameField: "login",
     },
     function (login, password, done) {
-      pool
-        .query(
-          'SELECT `user_id` AS "userId", first_name AS "firstName", surname, login, password_hash AS "passwordHash", EXISTS(SELECT * FROM `admin` WHERE `admin`.user_id = `user`.user_id) AS "isAdmin" FROM `user` WHERE login = ?',
-          [login]
-        )
-        .then((result) => result[0])
+      mysqlDAO
+        .getUserByLogin(login)
         .then(
           (rows) =>
             rows[0] || done(null, false, { message: "Користувач не знайдений" })
@@ -47,17 +38,12 @@ passport.use(
 );
 
 passport.serializeUser(function (user, done) {
-  // console.log("serializing user", user);
   done(null, user.userId);
 });
 
 passport.deserializeUser(function (id, done) {
-  pool
-    .query(
-      'SELECT user_id AS "userId", first_name AS "firstName", surname, login, password_hash AS "passportHash", EXISTS(SELECT * FROM admin WHERE admin.user_id = user.user_id) AS "isAdmin" FROM user WHERE user_id = ?',
-      [id]
-    )
-    .then((result) => result[0])
+  mysqlDAO
+    .deserializeUserById(id)
     .then((rows) => rows[0] || done(null, false))
     .then((user) => done(null, user))
     .catch((err) => done(err));
@@ -98,12 +84,12 @@ app.post("/api/user", async (req, res) => {
     passwordHash: sha512(userData.password),
   };
 
-  const result = (
-    await pool.query(
-      "INSERT INTO user (login, password_hash, first_name, surname) VALUES (?, ?, ?, ?)",
-      [user.login, user.passwordHash, user.firstName, user.surname]
-    )
-  )[0];
+  const result = await mysqlDAO.insertUser(
+    user.login,
+    user.passwordHash,
+    user.firstName,
+    user.surname
+  );
 
   req.logIn(
     {
@@ -127,7 +113,6 @@ app.post("/api/login", passport.authenticate("local"), function (req, res) {
       firstName: req.user.firstName,
       surname: req.user.surname,
     });
-    console.log("logged in");
   } else {
     res.status(403).json({
       message: req.message,
@@ -141,9 +126,10 @@ app.post("/api/product_in_basket", async (req, res) => {
     return;
   }
 
-  await pool.query(
-    "INSERT INTO product_in_basket (user_id, product_id, number_of_product) VALUES (?,?,?)",
-    [req.user.userId, req.body.productId, req.body.n]
+  await mysqlDAO.insertProductInBasket(
+    req.user.userId,
+    req.body.productId,
+    req.body.n
   );
 
   res.status(200).send("");
@@ -155,19 +141,7 @@ app.get("/api/product_in_basket", async (req, res) => {
     return;
   }
 
-  let rows = (
-    await pool.query(
-      `SELECT 
-          product_id AS "productId",
-          name,
-          price,
-          description,
-          number_of_product AS "number"
-      FROM product NATURAL JOIN product_in_basket 
-      WHERE user_id = ?`,
-      [req.user.userId]
-    )
-  )[0];
+  let rows = await mysqlDAO.getProductsInBasket(req.user.userId);
 
   res.status(200).json(rows);
 });
@@ -179,14 +153,12 @@ app.patch("/api/product_in_basket", async (req, res) => {
   }
 
   if (req.body.n == 0) {
-    await pool.query(
-      "DELETE FROM product_in_basket WHERE user_id = ? AND product_id = ?",
-      [req.user.userId, req.body.productId]
-    );
+    await mysqlDAO.deleteProductInBasket(req.user.userId, req.body.productId);
   } else {
-    await pool.query(
-      "UPDATE product_in_basket SET number_of_product = ? WHERE user_id = ? AND product_id = ?",
-      [req.body.n, req.user.userId, req.body.productId]
+    await mysqlDAO.updateProductInBasket(
+      req.body.n,
+      req.user.userId,
+      req.body.productId
     );
   }
 
@@ -202,26 +174,16 @@ app.get("/api/filters", async (req, res) => {
     providers: [],
   };
 
-  let row = (
-    await pool.query(
-      'SELECT MAX(price) AS "max", MIN(price) AS "min" FROM product'
-    )
-  )[0][0];
+  let row = (await mysqlDAO.getMaxMinPrice())[0];
 
   filters.min = row.min;
   filters.max = row.max;
 
-  let categoriesRows = (
-    await pool.query(
-      'SELECT category_id AS "categoryId", name AS "categoryName" FROM category'
-    )
-  )[0];
+  let categoriesRows = await mysqlDAO.getCategories();
 
   for (let key in categoriesRows) filters.categories.push(categoriesRows[key]);
 
-  let providersRows = (
-    await pool.query('SELECT DISTINCT provider_name AS "provider" FROM product')
-  )[0];
+  let providersRows = await mysqlDAO.getProviders();
 
   for (let key in providersRows)
     filters.providers.push(providersRows[key].provider);
@@ -387,30 +349,7 @@ app.post("/api/order", async (req, res) => {
 
 app.get("/api/order", async (req, res) => {
   if (!req.user) res.status(403).end();
-  console.log("orders user", req.user);
-  const rows = (
-    await pool.query(
-      `
-    SELECT
-      order_id AS "orderId",
-      oblast,
-      locality,
-      department_number AS "departmentNumber",
-      status,
-      product_id AS "productId",
-      name AS "productName",
-      price,
-      description,
-      number_of_products AS "number"
-    FROM \`order\` 
-      NATURAL JOIN order_has_product 
-      NATURAL JOIN product 
-    WHERE user_id = ?
-    ORDER BY order_id DESC`,
-      [req.user.userId]
-    )
-  )[0];
-  console.log("raw rows", typeof rows);
+  const rows = await mysqlDAO.getOrdersByUserId(req.user.userId);
   const orders = [];
 
   for (let key in rows) {
@@ -438,7 +377,6 @@ app.get("/api/order", async (req, res) => {
       });
     }
   }
-  console.log("orders", orders);
   res.status(200).json(orders);
 });
 
@@ -453,31 +391,12 @@ app.get("/api/isAdmin", (req, res) => {
 });
 
 app.get("/api/order/all", async (req, res) => {
-  console.log(req.user);
-  if (!req.user || !req.user.isAdmin) res.status(403).end();
+  if (!req.user || !req.user.isAdmin) {
+    res.status(403).end();
+    return;
+  }
 
-  const rows = (
-    await pool.query(
-      `
-    SELECT
-      CONCAT(first_name, " ", surname) AS userFullName,
-      order_id AS "orderId",
-      oblast,
-      locality,
-      department_number AS "departmentNumber",
-      status,
-      product_id AS "productId",
-      name AS "productName",
-      price,
-      description,
-      number_of_products AS "number"
-    FROM \`order\` 
-      NATURAL JOIN order_has_product 
-      NATURAL JOIN product 
-      NATURAL JOIN user
-    ORDER BY order_id DESC`
-    )
-  )[0];
+  const rows = await mysqlDAO.getAllOrders();
   const orders = [];
 
   for (let key in rows) {
@@ -507,18 +426,16 @@ app.get("/api/order/all", async (req, res) => {
     }
   }
 
-  res.status(200).json(orders);
+  res.json(orders);
 });
 
 app.patch("/api/order", async (req, res) => {
-  if (!req.user || !req.user.isAdmin) res.status(403).end();
+  if (!req.user || !req.user.isAdmin) {
+    res.status(403).end();
+    return;
+  }
 
-  console.log(`status = ${req.body.status} orderId = ${req.body.orderId}`);
-
-  await pool.query("UPDATE `order` SET status = ? WHERE order_id = ?", [
-    req.body.status,
-    req.body.orderId,
-  ]);
+  await mysqlDAO.updateOrderStatus(req.body.status, req.body.orderId);
 
   res.status(200).end();
 });
@@ -526,30 +443,7 @@ app.patch("/api/order", async (req, res) => {
 app.get("/api/order/by_provider", async (req, res) => {
   if (!req.user || !req.user.isAdmin) res.status(403).end();
 
-  console.log(req.query.provider);
-
-  const rows = (
-    await pool.query(
-      `
-    SELECT
-      CONCAT(first_name, " ", surname) AS userFullName,
-      order_id AS "orderId",
-      status,
-      product_id AS "productId",
-      name AS "productName",
-      price,
-      description,
-      number_of_products AS "number"
-    FROM \`order\` 
-      NATURAL JOIN order_has_product 
-      NATURAL JOIN product 
-      NATURAL JOIN user
-    WHERE provider_name = ?
-    ORDER BY order_id DESC`,
-      [req.query.provider]
-    )
-  )[0];
-  console.log(rows);
+  const rows = await mysqlDAO.getOrdersByProvider(req.query.provider);
   const orders = [];
 
   for (let key in rows) {

@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <h3>Регістрація</h3>
+    <h3>Реєстрація</h3>
 
     <form class="form" action="post" @submit.prevent="onSubmit" ref="form">
       <p>
