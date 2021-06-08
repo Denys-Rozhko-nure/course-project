@@ -38,7 +38,7 @@ export default {
 
       try {
         this.filtersLoading = true;
-        const responce = await fetch(`http://localhost:4000/api/filters`, {
+        const responce = await fetch(`${window.location.origin}/api/filters`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json;charset=utf-8",
@@ -64,7 +64,7 @@ export default {
       // debugger;
       try {
         const responce = await fetch(
-          `http://localhost:4000/api/products${this.$route.fullPath}`,
+          `${window.location.origin}/api/products${this.$route.fullPath}`,
           {
             method: "GET",
             headers: {

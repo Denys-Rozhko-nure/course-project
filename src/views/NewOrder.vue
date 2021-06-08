@@ -73,7 +73,7 @@ export default {
   methods: {
     async onSubmit() {
       try {
-        const responce = await fetch("http://localhost:4000/api/order", {
+        const responce = await fetch(`${window.location.origin}/api/order`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json;charset=utf-8",

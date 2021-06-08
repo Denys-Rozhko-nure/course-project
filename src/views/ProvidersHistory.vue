@@ -98,7 +98,7 @@ export default {
           this.selectedProvider
         )}`;
         const responce = await fetch(
-          `http://localhost:4000/api/order/by_provider${query}`,
+          `${window.location.origin}/api/order/by_provider${query}`,
           {
             method: "GET",
             headers: {

@@ -79,7 +79,7 @@ export default {
       }
       try {
         const responce = await fetch(
-          `http://localhost:4000/api/product_in_basket`,
+          `${window.location.origin}/api/product_in_basket`,
           {
             method: "POST",
             headers: {

@@ -91,7 +91,7 @@ export default {
   methods: {
     async setOrderStatus(orderId, status) {
       try {
-        const responce = await fetch(`http://localhost:4000/api/order`, {
+        const responce = await fetch(`${window.location.origin}/api/order`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json;charset=utf-8",
@@ -115,7 +115,7 @@ export default {
   },
   async mounted() {
     try {
-      const responce = await fetch(`http://localhost:4000/api/order/all`, {
+      const responce = await fetch(`${window.location.origin}/api/order/all`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json;charset=utf-8",

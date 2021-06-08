@@ -14,7 +14,7 @@ export default {
   },
   async mounted() {
     try {
-      const responce = await fetch(`http://localhost:4000/api/isAdmin`, {
+      const responce = await fetch(`${window.location.origin}/api/isAdmin`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json;charset=utf-8",

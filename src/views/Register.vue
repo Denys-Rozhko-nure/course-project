@@ -188,7 +188,7 @@ export default {
     async registerOnServer() {
       let responce;
       try {
-        responce = await fetch("http://localhost:4000/api/user", {
+        responce = await fetch(`${window.location.origin}/api/user`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json;charset=utf-8",
